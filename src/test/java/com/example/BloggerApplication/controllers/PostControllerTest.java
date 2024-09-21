@@ -5,6 +5,7 @@ import com.example.BloggerApplication.entites.Post;
 import com.example.BloggerApplication.entites.User;
 import com.example.BloggerApplication.repositories.PostRepository;
 import com.example.BloggerApplication.repositories.UserRepository;
+import com.example.BloggerApplication.services.PostService;
 import com.example.BloggerApplication.views.PostView;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +18,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,6 +42,9 @@ class PostControllerTest {
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private PostService postService;
 
     @BeforeEach
     void setUp() {
@@ -79,6 +85,29 @@ class PostControllerTest {
                 .ignoringActualNullFields()
                 .ignoringExpectedNullFields()
                 .isEqualTo(postDto);
+
+    }
+
+    @Test
+    @Transactional
+    void getAllPosts() throws Exception {
+
+        mockMvc.perform(get("/posts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("test"))
+                .andExpect(jsonPath("$[0].content").value("content"))
+                .andExpect(jsonPath("$.size()").value(1));
+    }
+    @Test
+    @Transactional
+    void getPostById() throws Exception {
+
+        PostView postView = postService.getPostById(2L);
+        mockMvc.perform(get("/posts/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value(postView.getTitle()))
+                .andExpect(jsonPath("$.content").value(postView.getContent()))
+                .andExpect(jsonPath("$.id").value(postView.getId()));
 
     }
 }

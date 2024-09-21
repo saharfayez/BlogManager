@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 public class PostController {
 
@@ -21,6 +23,26 @@ public class PostController {
         PostView addedPost = postService.addPost(postDto);
 
         return new ResponseEntity<>(addedPost, HttpStatus.CREATED);
+    }
+    @GetMapping("/posts")
+    public ResponseEntity<List<PostView>> getAllPosts() {
+
+        List<PostView> posts = postService.getAllPosts();
+        return new ResponseEntity<>(posts, HttpStatus.OK);
+
+    }
+
+    @GetMapping("/posts/{id}")
+    public ResponseEntity<PostView> getPostById(@PathVariable Long id) {
+
+        PostView postView = postService.getPostById(id);
+        if (postView != null) {
+            return new ResponseEntity<>(postView, HttpStatus.OK);
+
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
     }
 
 
