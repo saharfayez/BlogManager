@@ -10,6 +10,7 @@ import lombok.*;
 @Entity
 @Table(name = "posts")
 public class Post {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,4 +22,5 @@ public class Post {
     @ManyToOne()
     @JoinColumn(name = "author_id", nullable = false)
     private User user;
+
 }

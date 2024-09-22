@@ -1,10 +1,8 @@
 package com.example.BloggerApplication.security;
 
-import com.example.BloggerApplication.entites.User;
 import com.example.BloggerApplication.exception.TokenExpiredException;
 import com.example.BloggerApplication.services.JwtService;
 import com.example.BloggerApplication.services.UserDetailsServiceImpl;
-import com.example.BloggerApplication.services.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,11 +22,13 @@ import java.io.IOException;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     @Autowired
     private JwtService jwtService;
 
     @Autowired
     private UserDetailsServiceImpl userDetailsServiceImpl;
+
     final String header = "Authorization";
 
     final String prefix = "Bearer ";
@@ -41,6 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NotNull HttpServletResponse response,
             @NotNull FilterChain filterChain
     ) throws ServletException, IOException {
+
         final String authHeader = request.getHeader(header);
 
         if (authHeader == null || !authHeader.startsWith(prefix)) {

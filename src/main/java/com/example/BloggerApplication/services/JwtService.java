@@ -25,7 +25,9 @@ public class JwtService {
 
     @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
+
     private static final String AUTHORIZATION_HEADER = "Authorization";
+
     private static final String TOKEN_PREFIX = "Bearer ";
 
     public String extractUsername(String token) {
@@ -106,10 +108,8 @@ public class JwtService {
         if (authorizationHeader != null && authorizationHeader.startsWith(TOKEN_PREFIX)) {
             String token = authorizationHeader.substring(TOKEN_PREFIX.length());
 
-
             return token;
         }
-
         return null;
     }
 

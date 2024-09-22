@@ -19,6 +19,7 @@ import java.util.List;
 
 @Configuration
 public class BloggerApplicationConfig {
+
     @Autowired
     private UserDetailsServiceImpl userDetailsServiceImpl;
 

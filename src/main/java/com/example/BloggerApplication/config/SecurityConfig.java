@@ -14,12 +14,16 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 public class SecurityConfig {
+
     @Autowired
     private AuthenticationProvider authenticationProvider;
+
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Autowired
     private AuthExceptionHandler authExceptionHandler;
+
     @Autowired
     private CorsConfigurationSource corsConfigurationSource;
 

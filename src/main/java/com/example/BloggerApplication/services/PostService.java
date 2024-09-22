@@ -15,6 +15,7 @@ import java.util.List;
 
 @Service
 public class PostService {
+
     @Autowired
     private PostRepository postRepository;
 
@@ -26,9 +27,6 @@ public class PostService {
 
     @Autowired
     private JwtService jwtService;
-
-
-
 
     public PostView addPost(HttpServletRequest request , PostDto postDto) {
 
@@ -64,11 +62,10 @@ public class PostService {
     }
 
     public PostView updatePost(HttpServletRequest request , Long id, PostDto postDto) {
+
         String username = jwtService.getUsernameFromToken(request);
 
-        PostView postView = getPostById(id);
-
-        if(postView.getUserName().equals(username)){
+        if(authorizePost(request , id)){
 
            Post post = modelMapper.map(postDto, Post.class);
 
@@ -81,12 +78,35 @@ public class PostService {
            return modelMapper.map(savedPost, PostView.class);
         }
 
-        else {
+        throw new AccessDeniedException("User not allowed to update or delete this post.");
+    }
 
-            throw new ObjectNotFoundException("User not allowed to update or delete this post.");
+    public PostView deletePost(HttpServletRequest request , Long id) {
+
+        PostView postView = getPostById(id);
+
+        if(authorizePost(request , id)){
+
+            postRepository.deleteById(id);
+
+            return postView;
         }
 
+        throw new AccessDeniedException("User not allowed to delete this post.");
     }
 
 
+  public boolean authorizePost(HttpServletRequest request , Long id) {
+
+        String username = jwtService.getUsernameFromToken(request);
+
+        PostView postView = getPostById(id);
+
+        if(postView.getUserName().equals(username)){
+
+            return true;
+        }
+
+        return false;
+  }
 }

@@ -8,8 +8,10 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class PostDto {
+
     @NotBlank
     String title;
+
     @NotBlank
     String content;
 }
