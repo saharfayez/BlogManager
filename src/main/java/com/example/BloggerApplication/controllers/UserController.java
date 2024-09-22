@@ -7,6 +7,7 @@ import com.example.BloggerApplication.services.JwtService;
 import com.example.BloggerApplication.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,14 +21,15 @@ public class UserController {
     private JwtService jwtService;
 
     @PostMapping("/auth/signup")
-    public ResponseEntity<User> register(@Valid @RequestBody UserDto userDto) {
+    public ResponseEntity<User> signup(@Valid @RequestBody UserDto userDto) {
 
             User registeredUser = userService.signup(userDto);
-            return ResponseEntity.ok(registeredUser);
+
+            return new ResponseEntity<>(registeredUser , HttpStatus.CREATED);
     }
 
     @PostMapping("/auth/login")
-    public ResponseEntity<LoginResponse> authenticate(@Valid @RequestBody UserDto userDto) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody UserDto userDto) {
 
         String jwtToken = userService.login(userDto);
 
@@ -37,7 +39,7 @@ public class UserController {
 
         loginResponse.setExpiresIn(jwtService.getExpirationTime());
 
-        return ResponseEntity.ok(loginResponse);
-    }
+        return new ResponseEntity<>(loginResponse , HttpStatus.OK);
 
+    }
 }
