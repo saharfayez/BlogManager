@@ -3,14 +3,15 @@ package com.example.BloggerApplication.services;
 import com.example.BloggerApplication.dto.PostDto;
 import com.example.BloggerApplication.entites.Post;
 import com.example.BloggerApplication.entites.User;
+import com.example.BloggerApplication.exception.ObjectNotFoundException;
 import com.example.BloggerApplication.repositories.PostRepository;
 import com.example.BloggerApplication.views.PostView;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PostService {
@@ -23,24 +24,69 @@ public class PostService {
     @Autowired
     private ModelMapper modelMapper;
 
-    public PostView addPost(PostDto postDto) {
+    @Autowired
+    private JwtService jwtService;
+
+
+
+
+    public PostView addPost(HttpServletRequest request , PostDto postDto) {
+
+        String username = jwtService.getUsernameFromToken(request);
+
         Post post = modelMapper.map(postDto, Post.class);
-        User user = userService.findUser(postDto.getUserName());
+
+        User user = userService.findUser(username);
+
         post.setUser(user);
+
         Post savedPost = postRepository.save(post);
+
         return modelMapper.map(savedPost, PostView.class);
     }
 
     public List<PostView> getAllPosts() {
 
         List<Post> posts = postRepository.findAll();
+
         List<PostView> postViews = List.of(modelMapper.map(posts, PostView[].class));
+
         return postViews;
     }
 
     public PostView getPostById(Long id) {
-        Optional<Post> post = postRepository.findById(id);
-        PostView postView = modelMapper.map(post, PostView.class);
-        return postView;
+
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new ObjectNotFoundException("Post not found : " + id)
+                );
+
+        return modelMapper.map(post, PostView.class);
     }
+
+    public PostView updatePost(HttpServletRequest request , Long id, PostDto postDto) {
+        String username = jwtService.getUsernameFromToken(request);
+
+        PostView postView = getPostById(id);
+
+        if(postView.getUserName().equals(username)){
+
+           Post post = modelMapper.map(postDto, Post.class);
+
+           post.setId(id);
+
+           post.setUser(userService.findUser(username));
+
+           Post savedPost = postRepository.save(post);
+
+           return modelMapper.map(savedPost, PostView.class);
+        }
+
+        else {
+
+            throw new ObjectNotFoundException("User not allowed to update or delete this post.");
+        }
+
+    }
+
+
 }

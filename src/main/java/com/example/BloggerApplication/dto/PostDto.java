@@ -12,7 +12,4 @@ public class PostDto {
     String title;
     @NotBlank
     String content;
-    @NotNull
-    String userName;
-
 }

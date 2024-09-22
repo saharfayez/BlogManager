@@ -2,12 +2,15 @@ package com.example.BloggerApplication.services;
 
 import com.example.BloggerApplication.dto.UserDto;
 import com.example.BloggerApplication.entites.User;
+import com.example.BloggerApplication.exception.ObjectNotFoundException;
 import com.example.BloggerApplication.exception.UserAlreadyExistsException;
 import com.example.BloggerApplication.repositories.UserRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,9 +24,15 @@ public class UserService {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private ModelMapper modelMapper;
+
     public User findUser(String userName) {
         return userRepository.findUserByUserName(userName)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found : " + userName)
+                .orElseThrow(() -> new ObjectNotFoundException("User not found : " + userName)
                 );
     }
 
@@ -39,10 +48,23 @@ public class UserService {
 
     }
 
-    public User login(UserDto userDto) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userDto.getUsername(), userDto.getPassword()));
-        return userRepository.findUserByUserName(userDto.getUsername()).orElseThrow();
+    public String login(UserDto userDto) {
+       authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userDto.getUsername(), userDto.getPassword()));
+
+        String jwtToken = jwtService.generateToken(modelMapper.map(userDto , User.class));
+
+        return jwtToken;
     }
 
+
+    public String getAuthenticatedUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getName();
+        }
+
+        return null;
+    }
 
 }

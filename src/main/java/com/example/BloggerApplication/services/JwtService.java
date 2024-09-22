@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +25,8 @@ public class JwtService {
 
     @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String TOKEN_PREFIX = "Bearer ";
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -87,6 +90,27 @@ public class JwtService {
             throw new TokenExpiredException("Token has expired. Please log in again.");
         }
 
+    }
+
+    public String getUsernameFromToken(HttpServletRequest request) {
+        String token = getToken(request);
+
+        return extractUsername(token);
+
+    }
+
+    public String getToken(HttpServletRequest request) {
+
+        String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
+
+        if (authorizationHeader != null && authorizationHeader.startsWith(TOKEN_PREFIX)) {
+            String token = authorizationHeader.substring(TOKEN_PREFIX.length());
+
+
+            return token;
+        }
+
+        return null;
     }
 
 

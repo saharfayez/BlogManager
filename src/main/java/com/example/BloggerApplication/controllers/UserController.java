@@ -29,14 +29,17 @@ public class UserController {
 
     @PostMapping("/auth/login")
     public ResponseEntity<LoginResponse> authenticate(@Valid @RequestBody UserDto userDto) {
-        User authenticatedUser = userService.login(userDto);
 
-        String jwtToken = jwtService.generateToken(authenticatedUser);
+        String jwtToken = userService.login(userDto);
 
         LoginResponse loginResponse = new LoginResponse();
+
         loginResponse.setToken(jwtToken);
+
         loginResponse.setExpiresIn(jwtService.getExpirationTime());
 
         return ResponseEntity.ok(loginResponse);
+
     }
+
 }

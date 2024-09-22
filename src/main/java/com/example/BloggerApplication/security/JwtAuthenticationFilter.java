@@ -1,8 +1,10 @@
 package com.example.BloggerApplication.security;
 
+import com.example.BloggerApplication.entites.User;
 import com.example.BloggerApplication.exception.TokenExpiredException;
 import com.example.BloggerApplication.services.JwtService;
 import com.example.BloggerApplication.services.UserDetailsServiceImpl;
+import com.example.BloggerApplication.services.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +29,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private UserDetailsServiceImpl userDetailsServiceImpl;
+    final String header = "Authorization";
+
+    final String prefix = "Bearer ";
 
     final int beginIndex = 7;
 
@@ -36,9 +41,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NotNull HttpServletResponse response,
             @NotNull FilterChain filterChain
     ) throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
+        final String authHeader = request.getHeader(header);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith(prefix)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -47,7 +52,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             final String username = jwtService.extractUsername(jwt);
+            System.out.println(username);
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
 
             if (username != null && authentication == null) {
                 UserDetails userDetails = this.userDetailsServiceImpl.loadUserByUsername(username);
@@ -58,6 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
