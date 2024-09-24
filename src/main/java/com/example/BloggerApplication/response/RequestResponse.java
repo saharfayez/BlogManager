@@ -8,9 +8,10 @@ import lombok.*;
 @Setter
 @Getter
 @Builder
-public class LoginResponse {
+public class RequestResponse {
 
-    private String token;
+        private Long id;
 
-    private Long expiresIn;
+        private String username;
+
 }

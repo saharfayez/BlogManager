@@ -5,6 +5,8 @@ import com.example.BloggerApplication.entites.User;
 import com.example.BloggerApplication.exception.ObjectNotFoundException;
 import com.example.BloggerApplication.exception.UserAlreadyExistsException;
 import com.example.BloggerApplication.repositories.UserRepository;
+import com.example.BloggerApplication.response.LoginResponse;
+import com.example.BloggerApplication.response.RequestResponse;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,9 +39,9 @@ public class UserService {
                 );
     }
 
-    public User signup(UserDto userDto) {
+    public RequestResponse signup(UserDto userDto) {
 
-        if (userRepository.findUserByUserName(userDto.getUsername()).isPresent()) {
+        if (userRepository.existsByUserName(userDto.getUsername())) {
             throw new UserAlreadyExistsException("Username already exists. Please choose another one.");
         }
 
@@ -49,17 +51,29 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
 
-        return userRepository.save(user);
+        userRepository.save(user);
+
+        RequestResponse requestResponse = RequestResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .build();
+
+        return requestResponse;
 
     }
 
-    public String login(UserDto userDto) {
+    public LoginResponse login(UserDto userDto) {
 
-       authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userDto.getUsername(), userDto.getPassword()));
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userDto.getUsername(), userDto.getPassword()));
 
-        String jwtToken = jwtService.generateToken(modelMapper.map(userDto , User.class));
+        String jwtToken = jwtService.generateToken(modelMapper.map(userDto, User.class));
 
-        return jwtToken;
+        LoginResponse loginResponse = LoginResponse.builder()
+                .token(jwtToken)
+                .expiresIn(jwtService.getExpirationTime())
+                .build();
+
+        return loginResponse;
     }
 
 }

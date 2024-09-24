@@ -15,21 +15,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.assertj.core.api.Assertions.assertThat;
-
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@ContextConfiguration
 class PostControllerTest {
 
     @Autowired
@@ -59,91 +60,98 @@ class PostControllerTest {
         userRepository.save(user);
     }
 
-    @Test
-    void getPosts() throws Exception {
-        mockMvc.perform(get("/posts"))
-                .andExpect(status().isOk());
-
-    }
-    @Test
-    void testSignup() throws Exception {
-
-        UserDto userDto = new UserDto("testUser", "testPassword");
-
-
-        mockMvc.perform(post("/auth/signup")
-
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userDto))
-        )
-                .andExpect(status().isOk());
-
-    }
-
-    @Test
-    public void shouldAuthenticateUser() throws Exception {
-        UserDto userDto = new UserDto("testUser", "testPassword");
-
-        mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(userDto)))
-                .andExpect(status().isOk());
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //    @Test
-//    @Transactional
-//    void addPost() throws Exception {
-//        PostDto postDto = PostDto.builder()
-//                .title("test")
-//                .content("i am testing now")
-//                .userName(userName)
-//                .build();
-//
-//        String response = mockMvc.perform(post("/posts")
-//                        .content(objectMapper.writeValueAsString(postDto))
-//                        .contentType(MediaType.APPLICATION_JSON))
-//                .andExpect(status().isCreated())
-//                .andReturn()
-//                .getResponse()
-//                .getContentAsString();
-//
-//        PostView returnedPost = objectMapper.readValue(response, PostView.class);
-//
-//        Post post = postRepository.findById(returnedPost.getId()).get();
-//
-//        assertThat(returnedPost).usingRecursiveComparison()
-//                .ignoringActualNullFields()
-//                .ignoringExpectedNullFields()
-//                .isEqualTo(postDto);
-//
-//        assertThat(post).usingRecursiveComparison()
-//                .ignoringActualNullFields()
-//                .ignoringExpectedNullFields()
-//                .isEqualTo(postDto);
+//    void getPosts() throws Exception {
+//        mockMvc.perform(get("/posts"))
+//                .andExpect(status().isOk());
 //
 //    }
+//    @Test
+//    void testSignup() throws Exception {
+//
+//        UserDto userDto = new UserDto("testUser", "testPassword");
+//
+//        mockMvc.perform(post("/auth/signup")
+//
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .content(objectMapper.writeValueAsString(userDto))
+//        )
+//                .andExpect(status().isCreated());
+//
+//    }
+
+//    @Test
+//    public void shouldAuthenticateUser() throws Exception {
+//        UserDto userDto = new UserDto("testUser", "testPassword");
+//
+//        mockMvc.perform(post("/auth/login")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(new ObjectMapper().writeValueAsString(userDto)))
+//                .andExpect(status().isOk());
+//    }
+
+
+    @Test
+    @WithMockUser
+    public void testHello() throws Exception {
+
+        mockMvc.perform(get("/hello"))
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    @WithMockUser
+    void addPost() throws Exception {
+        PostDto postDto = PostDto.builder()
+                .title("test")
+                .content("i am testing now")
+                .build();
+
+        String response = mockMvc.perform(post("/posts")
+                        .content(objectMapper.writeValueAsString(postDto))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        PostView returnedPost = objectMapper.readValue(response, PostView.class);
+
+        Post post = postRepository.findById(returnedPost.getId()).get();
+
+        assertThat(returnedPost).usingRecursiveComparison()
+                .ignoringActualNullFields()
+                .ignoringExpectedNullFields()
+                .isEqualTo(postDto);
+
+        assertThat(post).usingRecursiveComparison()
+                .ignoringActualNullFields()
+                .ignoringExpectedNullFields()
+                .isEqualTo(postDto);
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //
 //    @Test
 //    @Transactional

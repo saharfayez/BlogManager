@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.List;
 
 @Service
@@ -28,7 +29,7 @@ public class PostService {
     @Autowired
     private JwtService jwtService;
 
-    public PostView addPost(HttpServletRequest request , PostDto postDto) {
+    public PostView addPost(HttpServletRequest request, PostDto postDto) {
 
         String username = jwtService.getUsernameFromToken(request);
 
@@ -61,52 +62,36 @@ public class PostService {
         return modelMapper.map(post, PostView.class);
     }
 
-    public PostView updatePost(HttpServletRequest request , Long id, PostDto postDto) {
+    public PostView updatePost(HttpServletRequest request, Long id, PostDto postDto) {
+
+        if (!authorizePost(request, id)) {
+            throw new AccessDeniedException("User not allowed to update or this post.");
+
+        }
 
         String username = jwtService.getUsernameFromToken(request);
-
-        if(authorizePost(request , id)){
-
-           Post post = modelMapper.map(postDto, Post.class);
-
-           post.setId(id);
-
-           post.setUser(userService.findUser(username));
-
-           Post savedPost = postRepository.save(post);
-
-           return modelMapper.map(savedPost, PostView.class);
-        }
-
-        throw new AccessDeniedException("User not allowed to update or delete this post.");
+        Post post = modelMapper.map(postDto, Post.class);
+        post.setId(id);
+        post.setUser(userService.findUser(username));
+        Post savedPost = postRepository.save(post);
+        return modelMapper.map(savedPost, PostView.class);
     }
 
-    public PostView deletePost(HttpServletRequest request , Long id) {
+    public PostView deletePost(HttpServletRequest request, Long id) {
 
-        PostView postView = getPostById(id);
-
-        if(authorizePost(request , id)){
-
-            postRepository.deleteById(id);
-
-            return postView;
+        if (!authorizePost(request, id)) {
+            throw new AccessDeniedException("User not allowed to delete this post.");
         }
 
-        throw new AccessDeniedException("User not allowed to delete this post.");
+        PostView postView = getPostById(id);
+        postRepository.deleteById(id);
+        return postView;
     }
 
 
-  public boolean authorizePost(HttpServletRequest request , Long id) {
-
+    public boolean authorizePost(HttpServletRequest request, Long id) {
         String username = jwtService.getUsernameFromToken(request);
-
         PostView postView = getPostById(id);
-
-        if(postView.getUserName().equals(username)){
-
-            return true;
-        }
-
-        return false;
-  }
+        return postView.getUserName().equals(username);
+    }
 }

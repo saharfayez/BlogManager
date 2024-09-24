@@ -1,8 +1,8 @@
 package com.example.BloggerApplication.controllers;
 
 import com.example.BloggerApplication.dto.UserDto;
-import com.example.BloggerApplication.entites.User;
 import com.example.BloggerApplication.response.LoginResponse;
+import com.example.BloggerApplication.response.RequestResponse;
 import com.example.BloggerApplication.services.JwtService;
 import com.example.BloggerApplication.services.UserService;
 import jakarta.validation.Valid;
@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.servlet.http.Cookie;
 @RestController
 public class UserController {
 
@@ -21,25 +21,25 @@ public class UserController {
     private JwtService jwtService;
 
     @PostMapping("/auth/signup")
-    public ResponseEntity<User> signup(@Valid @RequestBody UserDto userDto) {
+    public ResponseEntity<RequestResponse> signup(@Valid @RequestBody UserDto userDto) {
 
-            User registeredUser = userService.signup(userDto);
+            RequestResponse requestResponse = userService.signup(userDto);
 
-            return new ResponseEntity<>(registeredUser , HttpStatus.CREATED);
+            return new ResponseEntity<>(requestResponse , HttpStatus.CREATED);
     }
 
     @PostMapping("/auth/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody UserDto userDto) {
 
-        String jwtToken = userService.login(userDto);
-
-        LoginResponse loginResponse = new LoginResponse();
-
-        loginResponse.setToken(jwtToken);
-
-        loginResponse.setExpiresIn(jwtService.getExpirationTime());
+        LoginResponse loginResponse = userService.login(userDto);
 
         return new ResponseEntity<>(loginResponse , HttpStatus.OK);
 
+    }
+
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello World";
     }
 }
