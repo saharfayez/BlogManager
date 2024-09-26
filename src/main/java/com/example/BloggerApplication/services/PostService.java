@@ -65,8 +65,7 @@ public class PostService {
     public PostView updatePost(HttpServletRequest request, Long id, PostDto postDto) {
 
         if (!authorizePost(request, id)) {
-            throw new AccessDeniedException("User not allowed to update or this post.");
-
+            throw new AccessDeniedException("User not allowed to update this post.");
         }
 
         String username = jwtService.getUsernameFromToken(request);
@@ -77,15 +76,14 @@ public class PostService {
         return modelMapper.map(savedPost, PostView.class);
     }
 
-    public PostView deletePost(HttpServletRequest request, Long id) {
+    public String deletePost(HttpServletRequest request, Long id) {
 
         if (!authorizePost(request, id)) {
             throw new AccessDeniedException("User not allowed to delete this post.");
         }
 
-        PostView postView = getPostById(id);
         postRepository.deleteById(id);
-        return postView;
+        return "Deleted successfully";
     }
 
 

@@ -8,7 +8,7 @@ import lombok.*;
 @Setter
 @Getter
 @Builder
-public class RequestResponse {
+public class SignupResponse {
 
         private Long id;
 

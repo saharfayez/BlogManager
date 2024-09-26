@@ -6,7 +6,7 @@ import com.example.BloggerApplication.exception.ObjectNotFoundException;
 import com.example.BloggerApplication.exception.UserAlreadyExistsException;
 import com.example.BloggerApplication.repositories.UserRepository;
 import com.example.BloggerApplication.response.LoginResponse;
-import com.example.BloggerApplication.response.RequestResponse;
+import com.example.BloggerApplication.response.SignupResponse;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -39,26 +39,23 @@ public class UserService {
                 );
     }
 
-    public RequestResponse signup(UserDto userDto) {
+    public SignupResponse signup(UserDto userDto) {
 
         if (userRepository.existsByUserName(userDto.getUsername())) {
             throw new UserAlreadyExistsException("Username already exists. Please choose another one.");
         }
 
         User user = new User();
-
         user.setUserName(userDto.getUsername());
-
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
-
         userRepository.save(user);
 
-        RequestResponse requestResponse = RequestResponse.builder()
+        SignupResponse signupResponse = SignupResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .build();
 
-        return requestResponse;
+        return signupResponse;
 
     }
 

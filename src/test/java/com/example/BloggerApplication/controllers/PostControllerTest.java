@@ -1,12 +1,10 @@
 package com.example.BloggerApplication.controllers;
 
 import com.example.BloggerApplication.dto.PostDto;
-import com.example.BloggerApplication.dto.UserDto;
 import com.example.BloggerApplication.entites.Post;
 import com.example.BloggerApplication.entites.User;
 import com.example.BloggerApplication.repositories.PostRepository;
 import com.example.BloggerApplication.repositories.UserRepository;
-import com.example.BloggerApplication.services.PostService;
 import com.example.BloggerApplication.views.PostView;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,25 +14,28 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@ContextConfiguration
+@SpringBootTest
 class PostControllerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,57 +43,44 @@ class PostControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private PostService postService;
-
     final String userName = "sahar";
     final String password = "0000";
+    final String token = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzYWhhciIsImlhdCI6MTcyNzI2Mzc1NSwiZXhwIjoxNzU4Nzk5NzU1fQ.5_Lowj5eWW51Yaa3APWfp9a23_CYg1uViAscY7oC8Ro";
+    final String testToken = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbWwiLCJpYXQiOjE3MjczMzk1MjMsImV4cCI6MTc1ODg3NTUyM30.3WUn_5vN-L9N1H3Ov_4LHV2F1CCaNOv2hi90nNysGy0";
+
+    final String header = "Authorization";
+    Long id;
 
     @BeforeEach
     void setUp() {
+
         User user = User.builder()
                 .userName(userName)
                 .password(password)
                 .build();
+
+        User user2 = User.builder()
+                .userName("aml")
+                .password("0000")
+                .build();
+
         userRepository.save(user);
+        userRepository.save(user2);
+
+
+        Post post = Post.builder()
+                .title("test title")
+                .content("test content")
+                .user(user)
+                .build();
+        postRepository.save(post);
+
+        id = post.getId();
     }
-
-//    @Test
-//    void getPosts() throws Exception {
-//        mockMvc.perform(get("/posts"))
-//                .andExpect(status().isOk());
-//
-//    }
-//    @Test
-//    void testSignup() throws Exception {
-//
-//        UserDto userDto = new UserDto("testUser", "testPassword");
-//
-//        mockMvc.perform(post("/auth/signup")
-//
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .content(objectMapper.writeValueAsString(userDto))
-//        )
-//                .andExpect(status().isCreated());
-//
-//    }
-
-//    @Test
-//    public void shouldAuthenticateUser() throws Exception {
-//        UserDto userDto = new UserDto("testUser", "testPassword");
-//
-//        mockMvc.perform(post("/auth/login")
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .content(new ObjectMapper().writeValueAsString(userDto)))
-//                .andExpect(status().isOk());
-//    }
-
 
     @Test
     @WithMockUser
+    @Transactional
     public void testHello() throws Exception {
 
         mockMvc.perform(get("/hello"))
@@ -102,7 +90,8 @@ class PostControllerTest {
 
     @Test
     @WithMockUser
-    void addPost() throws Exception {
+    @Transactional
+    void addPostTest() throws Exception {
         PostDto postDto = PostDto.builder()
                 .title("test")
                 .content("i am testing now")
@@ -110,6 +99,7 @@ class PostControllerTest {
 
         String response = mockMvc.perform(post("/posts")
                         .content(objectMapper.writeValueAsString(postDto))
+                        .header(header, token)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andReturn()
@@ -132,48 +122,137 @@ class PostControllerTest {
 
     }
 
+    @Test
+    @WithMockUser
+    @Transactional
+    public void getAllPostsTest() throws Exception {
 
+        String response = mockMvc.perform(get("/posts")
+                        .header(header, token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(1))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
+        List<PostView> postViewList = List.of(objectMapper.readValue(response, PostView[].class));
 
+        List<Post> posts = postRepository.findAll();
 
+        assertThat(posts).usingRecursiveComparison()
+                .ignoringActualNullFields()
+                .ignoringExpectedNullFields()
+                .isEqualTo(postViewList);
 
+    }
 
+    @Test
+    @WithMockUser
+    @Transactional
+    public void getPostByIdTest() throws Exception {
 
+        String response = mockMvc.perform(get("/posts/" + id)
+                        .header(header, token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.title").value("test title"))
+                .andExpect(jsonPath("$.content").value("test content"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
+        PostView postView = objectMapper.readValue(response, PostView.class);
 
+        Post post = postRepository.findById(id).get();
 
+        assertThat(post).usingRecursiveComparison()
+                .ignoringActualNullFields()
+                .ignoringExpectedNullFields()
+                .isEqualTo(postView);
+    }
 
+    @Test
+    @WithMockUser
+    @Transactional
+    public void unauthorizedUpdatePostTest() throws Exception {
 
+        PostDto postDto = PostDto.builder()
+                .title("test")
+                .content("i am testing now")
+                .build();
 
+        mockMvc.perform(put("/posts/" + id)
+                        .content(objectMapper.writeValueAsString(postDto))
+                        .header(header, testToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
 
+    }
 
+    @Test
+    @WithMockUser
+    @Transactional
+    public void updatePostTest() throws Exception {
+        System.out.println(id);
+        PostDto postDto = PostDto.builder()
+                .title("test")
+                .content("i am testing now")
+                .build();
 
+        String response = mockMvc.perform(put("/posts/" + id)
+                        .content(objectMapper.writeValueAsString(postDto))
+                        .header(header, token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
 
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
+        PostView postView = objectMapper.readValue(response, PostView.class);
 
+        Post post = postRepository.findById(id).get();
 
-//
-//    @Test
-//    @Transactional
-//    void getAllPosts() throws Exception {
-//
-//        mockMvc.perform(get("/posts"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$[0].title").value("test"))
-//                .andExpect(jsonPath("$[0].content").value("content"))
-//                .andExpect(jsonPath("$.size()").value(1));
-//    }
-//
-//    @Test
-//    @Transactional
-//    void getPostById() throws Exception {
-//
-//        PostView postView = postService.getPostById(2L);
-//        mockMvc.perform(get("/posts/2"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.title").value(postView.getTitle()))
-//                .andExpect(jsonPath("$.content").value(postView.getContent()))
-//                .andExpect(jsonPath("$.id").value(postView.getId()));
-//
-//    }
+        assertThat(postView).usingRecursiveComparison()
+                .ignoringActualNullFields()
+                .ignoringExpectedNullFields()
+                .isEqualTo(postDto);
+
+        assertThat(post).usingRecursiveComparison()
+                .ignoringExpectedNullFields()
+                .ignoringActualNullFields()
+                .isEqualTo(postView);
+
+    }
+
+    @Test
+    @WithMockUser
+    @Transactional
+    public void deletePostTest() throws Exception {
+
+        mockMvc.perform(delete("/posts/" + id)
+                        .header(header, token))
+
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        List<Post> posts = postRepository.findAll();
+
+        assertThat(posts.size()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser
+    @Transactional
+    public void unauthorizedDeletePostTest() throws Exception {
+
+        mockMvc.perform(delete("/posts/" + id)
+                        .header(header, testToken))
+                .andExpect(status().isForbidden());
+
+    }
+
 }

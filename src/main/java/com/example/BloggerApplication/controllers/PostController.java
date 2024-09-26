@@ -23,16 +23,14 @@ public class PostController {
     public ResponseEntity<PostView> addPost(HttpServletRequest request , @Valid @RequestBody PostDto postDto) {
 
         PostView addedPost = postService.addPost(request , postDto);
-
         return new ResponseEntity<>(addedPost, HttpStatus.CREATED);
     }
 
     @GetMapping("/posts")
     public ResponseEntity<List<PostView>> getAllPosts() {
 
-            List<PostView> posts = postService.getAllPosts();
-
-            return new ResponseEntity<>(posts, HttpStatus.OK);
+        List<PostView> posts = postService.getAllPosts();
+        return new ResponseEntity<>(posts, HttpStatus.OK);
 
     }
 
@@ -40,7 +38,6 @@ public class PostController {
     public ResponseEntity<PostView> getPostById(@PathVariable Long id) {
 
         PostView postView = postService.getPostById(id);
-
         return new ResponseEntity<>(postView, HttpStatus.OK);
 
     }
@@ -49,16 +46,15 @@ public class PostController {
     @PutMapping("/posts/{id}")
     public ResponseEntity<PostView> updatePost( HttpServletRequest request , @Valid @RequestBody PostDto postDto, @PathVariable Long id) {
 
-     PostView postView =  postService.updatePost(request , id, postDto);
-
+        PostView postView =  postService.updatePost(request , id, postDto);
         return new ResponseEntity<>(postView , HttpStatus.OK);
     }
 
     @DeleteMapping("/posts/{id}")
-    public ResponseEntity<PostView> deletePost(HttpServletRequest request , @PathVariable Long id) {
+    public ResponseEntity<String> deletePost(HttpServletRequest request , @PathVariable Long id) {
 
-        PostView postView = postService.deletePost(request , id);
-        return new ResponseEntity<>(postView, HttpStatus.OK);
+        String reponse = postService.deletePost(request , id);
+        return new ResponseEntity<>(reponse, HttpStatus.OK);
     }
 
 }
